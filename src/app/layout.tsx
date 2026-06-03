@@ -4,6 +4,7 @@ import "./globals.css";
 import {Header} from "@/components/Header";
 import {Footer} from "@/components/Footer";
 import { cn } from "@/lib/utils";
+import {ThemeProvider} from "@/components/ThemeProvider";
 
 const montserratHeading = Montserrat({subsets:['latin'],variable:'--font-heading'});
 
@@ -30,13 +31,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable, montserratHeading.variable)}>
+    <html lang="en" className={cn("font-sans", inter.variable, montserratHeading.variable)} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+      <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
       >
       <Header/>
         {children}
       <Footer/>
+      </ThemeProvider>
       </body>
     </html>
   );
