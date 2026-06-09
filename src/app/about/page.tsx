@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import ReviewScroller from "@/components/ReviewScroller";
 
 export default function AboutUs() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -301,6 +302,10 @@ export default function AboutUs() {
                         <p className="text-xs text-slate-600 leading-relaxed">Fast on-site deployment, minimizing plant shutdown delays during maintenance turnarounds.</p>
                     </div>
                 </div>
+            </section>
+
+            <section>
+                <ReviewScroller/>
             </section>
 
             {/* ========================================================= */}

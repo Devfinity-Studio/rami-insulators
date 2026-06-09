@@ -42,11 +42,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
         >
-            <PreloaderWrapper>
                 <Header/>
                 {children}
                 <Footer/>
-            </PreloaderWrapper>
         </ThemeProvider>
         </body>
         </html>
