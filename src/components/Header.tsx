@@ -1,175 +1,196 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
+import { usePathname } from 'next/navigation';
+import gsap from 'gsap';
 
 export function Header() {
     const [isOpen, setIsOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [isClient, setIsClient] = useState(false); // Track if it's client-side
+    const pathname = usePathname();
+    const { scrollYProgress } = useScroll();
 
+    const scaleProgress = useSpring(scrollYProgress, {
+        stiffness: 200,
+        damping: 30,
+        restDelta: 0.001
+    });
+
+    // Handle entry stagger animation for desktop nav items
     useEffect(() => {
-        // Set isClient to true after the component mounts
-        setIsClient(true);
+        const ctx = gsap.context(() => {
+            gsap.from(".nav-item", {
+                opacity: 0,
+                y: -10,
+                stagger: 0.1,
+                duration: 1,
+                ease: "expo.out"
+            });
+        });
+        return () => ctx.revert();
     }, []);
 
-    // This will only run if it's on the client side
+    // Monitor scroll position to handle layout transitions
     useEffect(() => {
-        if (!isClient) return; // Skip this logic if not client-side
-
-        const handleScroll = () => {
-            // Toggle `isScrolled` based on scroll position
-            if (window.scrollY > 50) {
-                setIsScrolled(true);
-            } else {
-                setIsScrolled(false);
-            }
-
+        const updateScroll = () => {
+            setIsScrolled(window.scrollY > 50);
         };
 
-        // Add scroll event listener
-        window.addEventListener("scroll", handleScroll);
+        window.addEventListener('scroll', updateScroll);
+        return () => window.removeEventListener('scroll', updateScroll);
+    }, []);
 
-        // Cleanup event listener on component unmount
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, [isClient]); // Only run this effect if it's client-side
+    const pages = [
+        { name: "Home", href: "/" },
+        { name: "Services", href: "/services" },
+        { name: "About", href: "/about" },
+        { name: "Events", href: "/events" },
+        { name: "Contact", href: "/contact" },
+    ];
 
     return (
         <>
-            {/* Main Header (Below Topbar) */}
-            <header
-                className={`fixed top-0 left-0 w-full bg-white p-4 shadow-md z-40
-            ${isScrolled ? "!bg-black/70 transition-all !w-[80vw] translate-x-10 translate-y-5 md:translate-x-40 rounded-4xl" : "opacity-100 transition-all translate-x-0"}
-            `}
-            >
-                <div className="max-w-8xl mx-auto flex justify-between items-center">
-                    <Link href="/">
-                        <Image
-                            src="/logo.png"
-                            alt="Logo"
-                            width={200}
-                            height={10}
-                        />
-                    </Link>
-                    {/* Desktop Navigation */}
-                    <nav
-                        className={`hidden md:flex space-x-6 text-black text-md ${isScrolled ? "text-white" : ""}`}
-                    >
-                        <nav
-                            className={`hidden md:flex items-center text-black uppercase ${isScrolled ? "text-white" : ""}`}
-                        >
-                            {/* Products with Dropdown */}
-                            <div className="relative group">
-                                <Link href="/products">
-                                    <button className="hover:text-gray-400 px-4 uppercase whitespace-nowrap">
-                                        Page 1
-                                    </button>
-                                </Link>
+            {/* Scroll Progress Bar */}
+            <motion.div
+                className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-[#2b6495] to-[#d35422] z-[999]"
+                style={{ width: scaleProgress }}
+            />
 
-                                {/* Dropdown Menu */}
-                                <div
-                                    className={`absolute mt-2 w-100 bg-white border p-2 border-gray-200 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 grid grid-cols-1 gap-4 ${isScrolled ? "!bg-black !text-white !border-black" : ""}`}
+            {/* Main Header Container */}
+            <div className="fixed top-0 left-0 w-full z-[100] pointer-events-none flex justify-center">
+                <motion.header
+                    animate={{
+                        y: isScrolled ? 16 : 0,
+                        width: isScrolled ? "80%" : "100%",
+                        backgroundColor: isScrolled ? "rgba(0, 0, 0, 0.8)" : "rgba(229, 229, 229, 1)",
+                        color: isScrolled ? "#ffffff" : "#444444",
+                        borderRadius: isScrolled ? "24px" : "0px",
+                        boxShadow: isScrolled ? "0px 10px 30px rgba(0, 0, 0, 0.3)" : "0px 0px 0px rgba(0, 0, 0, 0)",
+                    }}
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                    className="pointer-events-auto backdrop-blur-xl border-b border-[#2c4468]/30 font-orbitron"
+                >
+                    {/* Inner wrapper handles vertical shrinking via dynamic padding */}
+                    <motion.div
+                        animate={{
+                            paddingTop: isScrolled ? "0.5rem" : "1rem",   // py-2 vs py-4
+                            paddingBottom: isScrolled ? "0.5rem" : "1rem"
+                        }}
+                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                        className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between"
+                    >
+                        {/* Shrunk Logo Wrapper */}
+                        <motion.div
+                            className="inline-block text-left origin-left"
+                            animate={{ scale: isScrolled ? 0.8 : 1 }} // Shrinks logo size smoothly down to 80%
+                            whileHover={{ scale: isScrolled ? 0.85 : 1.05 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        >
+                            <Link href="/" className="block">
+                                <Image
+                                    src="/logo.png"
+                                    alt="Rami Insulators"
+                                    width={250}
+                                    height={200}
+                                    className={`w-auto h-auto transition-all duration-300 ${isScrolled ? 'brightness-0 invert' : ''}`}
+                                    priority
+                                />
+                            </Link>
+                        </motion.div>
+
+                        {/* Desktop Navigation */}
+                        <nav className="hidden md:flex gap-6 text-sm font-semibold uppercase">
+                            {pages.map((link) => (
+                                <motion.div
+                                    key={link.href}
+                                    className="nav-item"
+                                    whileHover={{ scale: 1.15, rotate: -1 }}
                                 >
                                     <Link
-                                        href="/products#product1"
-                                        className={`px-4 py-2 border-b-2 border-black whitespace-nowrap ${isScrolled ? "hover:bg-yellow-300/50 hover:text-black" : "hover:bg-gray-200"}`}
+                                        href={link.href}
+                                        className={`px-4 py-1 rounded-xl transition-all duration-300 ${
+                                            pathname === link.href
+                                                ? 'bg-[#d35422] text-black shadow-md'
+                                                : isScrolled ? 'hover:text-[#2b6495] text-white' : 'hover:text-[#2b6495] text-[#444444]'
+                                        }`}
                                     >
-                                        product1
+                                        {link.name}
                                     </Link>
-                                    <Link
-                                        href="/products#product2"
-                                        className={`px-4 py-2 border-b-2 border-black whitespace-nowrap ${isScrolled ? "hover:bg-yellow-300/50 hover:text-black" : "hover:bg-gray-200"}`}
-                                    >
-                                        product2
-                                    </Link>
-                                    <Link
-                                        href="/products#product3"
-                                        className={`px-4 py-2 border-b-2 border-black whitespace-nowrap ${isScrolled ? "hover:bg-yellow-300/50 hover:text-black" : "hover:bg-gray-200"}`}
-                                    >
-                                        product3
-                                    </Link>
-                                    <Link
-                                        href="/products#product4"
-                                        className={`px-4 py-2 border-b-2 border-black whitespace-nowrap ${isScrolled ? "hover:bg-yellow-300/50 hover:text-black" : "hover:bg-gray-200"}`}
-                                    >
-                                        product4
-                                    </Link>
-                                    <Link
-                                        href="/products#product5"
-                                        className={`px-4 py-2 border-b-2 border-black whitespace-nowrap ${isScrolled ? "hover:bg-yellow-300/50 hover:text-black" : "hover:bg-gray-200"}`}
-                                    >
-                                        product5
-                                    </Link>
-                                </div>
-                            </div>
-                            <span className="h-5 w-0.5 bg-amber-600"></span>
-                            <Link href="/end" className="hover:text-gray-400 px-4 whitespace-nowrap">
-                                Page 2
-                            </Link>
-                            <span className="h-5 w-0.5 bg-amber-600"></span>
-                            <Link href="/supplies" className="hover:text-gray-400 px-4 whitespace-nowrap">
-                                Page 3
-                            </Link>
-                            <span className="h-5 w-0.5 bg-amber-600"></span>
-                            <Link href="/contact" className="hover:text-gray-400 px-4 whitespace-nowrap">
-                                Contact Us
-                            </Link>
-                            <span className="h-5 w-0.5 bg-amber-600"></span>
-                            <Link href="/events" className="hover:text-gray-400 px-4 whitespace-nowrap">
-                                Events Gallery
-                            </Link>
+                                </motion.div>
+                            ))}
                         </nav>
-                    </nav>
-                    {/* Hamburger Menu Button */}
-                    <button
-                        className={`md:hidden p-2 focus:outline-none
-                        ${isScrolled ? "!text-white" : ""}`}
-                        onClick={() => setIsOpen(!isOpen)}
-                    >
-                        <Menu size={28} />
-                    </button>
-                </div>
-            </header>
 
-            {/* Side Menu (Appears Below Topbar) */}
-            <div
-                className={`fixed top-[52px] z-50 right-0 h-full w-64 bg-white shadow-lg transform ${
-                    isOpen ? "translate-x-0" : "translate-x-full z-50"
-                } transition-transform duration-300 z-30`}
-            >
-                {/* Close Button & Logo */}
-                <div className="flex items-center justify-between p-4 border-b border-black">
-                    <Image
-                        src="/logo.png"
-                        alt="Logo"
-                        width={80}
-                        height={40}
-                    />
-                    <button onClick={() => setIsOpen(false)}>
-                        <X size={28} color="black" />
-                    </button>
-                </div>
+                        {/* Mobile Menu Button */}
+                        <motion.button
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.8, duration: 0.4 }}
+                            className="md:hidden focus:outline-none"
+                            onClick={() => setIsOpen(true)}
+                            aria-label="Open Menu"
+                        >
+                            <Menu className={`w-7 h-7 transition-colors duration-300 ${isScrolled ? 'text-white' : 'text-black'}`} />
+                        </motion.button>
+                    </motion.div>
 
-                {/* Menu Items */}
-                <nav className="flex flex-col p-4 space-y-4 text-black">
-                    <Link href="/products" className="hover:text-gray-400 px-4">
-                        Products
-                    </Link>
-                    <Link href="/end" className="hover:text-gray-400 px-4">
-                        End-End Systems
-                    </Link>
-                    <Link href="/supplies" className="hover:text-gray-400 px-4">
-                        Project Supplies
-                    </Link>
-                    <Link href="/contact" className="hover:text-gray-400 px-4">
-                        Contact Us
-                    </Link>
-                    <Link href="/events" className="hover:text-gray-400 px-4">
-                        Events & Updates
-                    </Link>
-                </nav>
+                    {/* Mobile Drawer Container */}
+                    <AnimatePresence>
+                        {isOpen && (
+                            <>
+                                <motion.div
+                                    initial={{ x: '100%', opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: '100%', opacity: 0 }}
+                                    transition={{ duration: 0.5, ease: 'easeInOut' }}
+                                    className="fixed top-0 right-0 h-full w-72 bg-gradient-to-b from-[#111111] to-[#1c1c1c] backdrop-blur-md shadow-2xl z-50 flex flex-col border-l border-[#2e486d]/20 rounded-l-xl"
+                                >
+                                    <motion.div
+                                        initial={{ y: -20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="flex items-center justify-between p-4 border-b border-[#2e486d]/20"
+                                    >
+                                        <span className="text-lg font-semibold text-white">Navigation</span>
+                                        <button onClick={() => setIsOpen(false)} aria-label="Close Menu">
+                                            <X className="w-6 h-6 text-white" />
+                                        </button>
+                                    </motion.div>
+
+                                    <nav className="flex flex-col mt-6 px-6 space-y-6 text-base font-medium">
+                                        {pages.map((link, i) => (
+                                            <motion.div
+                                                key={link.href}
+                                                initial={{ x: 40, opacity: 0 }}
+                                                animate={{ x: 0, opacity: 1 }}
+                                                transition={{ delay: i * 0.1, type: 'spring' }}
+                                            >
+                                                <Link
+                                                    href={link.href}
+                                                    className={`block py-2 px-3 rounded-lg transition-all duration-300 ${pathname === link.href ? 'bg-[#d35422] text-black' : 'text-white hover:text-[#e0842d]'}`}
+                                                    onClick={() => setIsOpen(false)}
+                                                >
+                                                    {link.name}
+                                                </Link>
+                                            </motion.div>
+                                        ))}
+                                    </nav>
+                                </motion.div>
+
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 0.5 }}
+                                    exit={{ opacity: 0 }}
+                                    className="fixed inset-0 bg-black z-40 md:hidden"
+                                    onClick={() => setIsOpen(false)}
+                                />
+                            </>
+                        )}
+                    </AnimatePresence>
+                </motion.header>
             </div>
         </>
     );
